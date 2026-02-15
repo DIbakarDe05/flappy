@@ -33,9 +33,7 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
-    max-width: 480px;
-    /* Mobile-first limit width on desktop */
-    max-height: 800px;
+    /* Removed max-width/max-height for full landscape experience */
     background: linear-gradient(180deg, #6DD5FA 0%, #2980B9 100%);
     /* Day sky fallback */
     overflow: hidden;
