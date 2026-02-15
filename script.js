@@ -33,14 +33,8 @@ class Bird {
         this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity * 0.1)));
         ctx.rotate(this.rotation);
 
-        // Calculate animation frame based on velocity
-        let currentImageIndex = 0; // Central
-        if (this.velocity < -2) {
-            currentImageIndex = 1; // Upward
-        } else if (this.velocity > 2) {
-            currentImageIndex = 2; // Downward
-        }
-
+        // Always use Central image
+        const currentImageIndex = 0;
         const img = this.game.assets.birdImages[currentImageIndex];
 
         if (img && img.complete && img.naturalWidth > 0) {
@@ -82,12 +76,12 @@ class Bird {
         this.bobTimer += deltaTime * 0.005;
         this.y = this.baseY + Math.sin(this.bobTimer) * 10;
 
-        // Update animation for idle (keep flapping loop in idle)
-        this.updateAnimation(deltaTime);
+        // No animation update needed for single image
+        // this.updateAnimation(deltaTime);
 
         ctx.translate(this.x, this.y);
 
-        const currentImageIndex = this.animationSequence[this.currentSequenceIndex];
+        const currentImageIndex = 0; // Always Central
         const img = this.game.assets.birdImages[currentImageIndex];
 
         if (img && img.complete && img.naturalWidth > 0) {
