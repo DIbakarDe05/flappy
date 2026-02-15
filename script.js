@@ -33,10 +33,14 @@ class Bird {
         this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity * 0.1)));
         ctx.rotate(this.rotation);
 
-        // Calculate animation frame
-        // If jumping (negative velocity), maybe stick to Upward? 
-        // For now, just simple flapping loop
-        const currentImageIndex = this.animationSequence[this.currentSequenceIndex];
+        // Calculate animation frame based on velocity
+        let currentImageIndex = 0; // Central
+        if (this.velocity < -2) {
+            currentImageIndex = 1; // Upward
+        } else if (this.velocity > 2) {
+            currentImageIndex = 2; // Downward
+        }
+
         const img = this.game.assets.birdImages[currentImageIndex];
 
         if (img && img.complete && img.naturalWidth > 0) {
@@ -78,7 +82,7 @@ class Bird {
         this.bobTimer += deltaTime * 0.005;
         this.y = this.baseY + Math.sin(this.bobTimer) * 10;
 
-        // Update animation for idle too
+        // Update animation for idle (keep flapping loop in idle)
         this.updateAnimation(deltaTime);
 
         ctx.translate(this.x, this.y);
@@ -120,7 +124,8 @@ class Bird {
         this.velocity += this.gravity;
         this.y += this.velocity;
 
-        this.updateAnimation(deltaTime);
+        // No need to update animation timer for gameplay as it is velocity based now
+        // this.updateAnimation(deltaTime);
 
         // Floor collision
         if (this.y + this.radius >= this.game.height) {
