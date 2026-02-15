@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,11 +8,18 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
-        
+
         <!-- UI Overlays -->
+        <button id="pause-btn" class="hidden">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 4V20" stroke="white" stroke-width="4" stroke-linecap="round" />
+                <path d="M18 4V20" stroke="white" stroke-width="4" stroke-linecap="round" />
+            </svg>
+        </button>
         <div id="start-screen" class="ui-screen active">
             <h1>FLAPPY BIRD</h1>
             <p>Tap, Click, or Press Space to Jump</p>
@@ -34,4 +42,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

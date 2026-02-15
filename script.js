@@ -14,6 +14,10 @@ class Bird {
         this.gravity = 0.25;
         this.jumpStrength = -5.5;
         this.rotation = 0;
+
+        // For bobbing animation
+        this.baseY = this.y;
+        this.bobTimer = 0;
     }
 
     draw(ctx) {
@@ -28,6 +32,51 @@ class Bird {
         if (img && img.complete && img.naturalWidth > 0) {
             // Draw custom image
             // Draw centered
+            ctx.drawImage(img, -this.radius * 1.5, -this.radius * 1.5, this.radius * 3, this.radius * 3);
+        } else {
+            // Fallback: Draw Geometric Bird
+            ctx.fillStyle = "#FFD700"; // Gold body
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(this.radius / 2, -this.radius / 2, this.radius / 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "black";
+            ctx.beginPath();
+            ctx.arc(this.radius / 2 + 2, -this.radius / 2, this.radius / 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Beak
+            ctx.fillStyle = "#FF6B6B";
+            ctx.beginPath();
+            ctx.moveTo(this.radius / 2, 0);
+            ctx.lineTo(this.radius + 10, 5);
+            ctx.lineTo(this.radius / 2, 10);
+            ctx.fill();
+        }
+        ctx.restore();
+        ctx.restore();
+    }
+
+    drawIdle(ctx, deltaTime) {
+        ctx.save();
+
+        // Bobbing math
+        this.bobTimer += deltaTime * 0.005;
+        this.y = this.baseY + Math.sin(this.bobTimer) * 10;
+
+        ctx.translate(this.x, this.y);
+
+        // Draw bird (same code as draw but duplicated for clarity or refactor)
+        // Ideally we refactor drawing logic to a method that takes 0,0 context
+        // But for now let's reuse the internal drawing logic
+
+        const img = this.game.assets.birdImage;
+        if (img && img.complete && img.naturalWidth > 0) {
             ctx.drawImage(img, -this.radius * 1.5, -this.radius * 1.5, this.radius * 3, this.radius * 3);
         } else {
             // Fallback: Draw Geometric Bird
@@ -142,6 +191,7 @@ class Game {
         document.getElementById('best-score').innerText = this.bestScore;
 
         this.isRunning = false;
+        this.isPaused = false;
         this.isGameOver = false;
 
         // Assets
@@ -205,6 +255,37 @@ class Game {
             e.stopPropagation();
             this.restart();
         });
+
+        // Pause/Resume
+        document.getElementById('pause-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePause();
+        });
+
+        document.getElementById('resume-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePause();
+        });
+    }
+
+    togglePause() {
+        if (!this.isRunning || this.isGameOver) return;
+
+        this.isPaused = !this.isPaused;
+
+        if (this.isPaused) {
+            document.getElementById('pause-screen').classList.remove('hidden');
+            document.getElementById('pause-screen').classList.add('active');
+            document.getElementById('pause-btn').classList.add('hidden'); // Optional: hide pause button while paused?
+        } else {
+            document.getElementById('pause-screen').classList.remove('active');
+            document.getElementById('pause-screen').classList.add('hidden');
+            document.getElementById('pause-btn').classList.remove('hidden');
+
+            // Resume loop
+            this.lastTime = performance.now();
+            requestAnimationFrame(ts => this.loop(ts));
+        }
     }
 
     resize() {
@@ -221,8 +302,10 @@ class Game {
         this.height = rect.height;
 
         if (!this.isRunning) {
+            // Keep bird centered if not running
             this.bird.y = this.height / 2;
-            this.drawWelcome();
+            this.bird.baseY = this.height / 2;
+            this.drawWelcome(0);
         }
     }
 
@@ -240,6 +323,7 @@ class Game {
     start() {
         document.getElementById('start-screen').classList.remove('active');
         document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('pause-btn').classList.remove('hidden'); // Show pause btn
         document.getElementById('score-display').classList.remove('hidden');
         document.getElementById('score-display').innerText = 0;
 
@@ -265,6 +349,8 @@ class Game {
         this.isRunning = false;
         this.isGameOver = true;
         this.playSound('gameover');
+
+        document.getElementById('pause-btn').classList.add('hidden');
 
         document.getElementById('game-over-screen').classList.remove('hidden');
         document.getElementById('game-over-screen').classList.add('active');
@@ -335,22 +421,27 @@ class Game {
         this.bird.draw(this.ctx);
     }
 
-    drawWelcome() {
+    drawWelcome(deltaTime) {
         this.ctx.clearRect(0, 0, this.width, this.height);
-        // Could draw a static bird here
-        this.bird.draw(this.ctx);
+        this.bird.drawIdle(this.ctx, deltaTime);
     }
 
     loop(timestamp) {
-        if (!this.isRunning) return;
+        // If paused, do nothing but maybe request next frame to stay alive if needed, 
+        // but typically we stop requesting loops. 
+        // We will restart loop on resume.
+        if (this.isPaused) return;
 
         const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
 
-        this.update(deltaTime);
-        this.draw();
-
         if (this.isRunning) {
+            this.update(deltaTime);
+            this.draw();
+            requestAnimationFrame(ts => this.loop(ts));
+        } else if (!this.isGameOver) {
+            // Idle state on welcome screen
+            this.drawWelcome(deltaTime);
             requestAnimationFrame(ts => this.loop(ts));
         }
     }
@@ -358,5 +449,7 @@ class Game {
 
 // Initialize
 window.addEventListener('load', () => {
-    new Game();
+    const game = new Game();
+    // Start the idle loop
+    requestAnimationFrame(ts => game.loop(ts));
 });
