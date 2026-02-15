@@ -12,6 +12,11 @@ class Bird {
         this.radius = 20;
         this.velocity = 0;
         this.gravity = 0.25;
+        // Animation
+        this.frameTimer = 0;
+        this.frameInterval = 100; // ms
+        this.animationSequence = [0, 1, 0, 2]; // Central, Up, Central, Down
+        this.currentSequenceIndex = 0;
         this.jumpStrength = -5.5;
         this.rotation = 0;
 
@@ -28,14 +33,19 @@ class Bird {
         this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity * 0.1)));
         ctx.rotate(this.rotation);
 
-        const img = this.game.assets.birdImage;
+        // Calculate animation frame
+        // If jumping (negative velocity), maybe stick to Upward? 
+        // For now, just simple flapping loop
+        const currentImageIndex = this.animationSequence[this.currentSequenceIndex];
+        const img = this.game.assets.birdImages[currentImageIndex];
+
         if (img && img.complete && img.naturalWidth > 0) {
             // Draw custom image
             // Draw centered
-            ctx.drawImage(img, -this.radius * 1.5, -this.radius * 1.5, this.radius * 3, this.radius * 3);
+            ctx.drawImage(img, -this.radius * 2, -this.radius * 1.5, this.radius * 4, this.radius * 3);
         } else {
             // Fallback: Draw Geometric Bird
-            ctx.fillStyle = "#FFD700"; // Gold body
+            ctx.fillStyle = "#FFD700";
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.fill();
@@ -58,7 +68,6 @@ class Bird {
             ctx.lineTo(this.radius / 2, 10);
             ctx.fill();
         }
-        ctx.restore();
         ctx.restore();
     }
 
@@ -69,18 +78,19 @@ class Bird {
         this.bobTimer += deltaTime * 0.005;
         this.y = this.baseY + Math.sin(this.bobTimer) * 10;
 
+        // Update animation for idle too
+        this.updateAnimation(deltaTime);
+
         ctx.translate(this.x, this.y);
 
-        // Draw bird (same code as draw but duplicated for clarity or refactor)
-        // Ideally we refactor drawing logic to a method that takes 0,0 context
-        // But for now let's reuse the internal drawing logic
+        const currentImageIndex = this.animationSequence[this.currentSequenceIndex];
+        const img = this.game.assets.birdImages[currentImageIndex];
 
-        const img = this.game.assets.birdImage;
         if (img && img.complete && img.naturalWidth > 0) {
-            ctx.drawImage(img, -this.radius * 1.5, -this.radius * 1.5, this.radius * 3, this.radius * 3);
+            ctx.drawImage(img, -this.radius * 2, -this.radius * 1.5, this.radius * 4, this.radius * 3);
         } else {
-            // Fallback: Draw Geometric Bird
-            ctx.fillStyle = "#FFD700"; // Gold body
+            // Fallback
+            ctx.fillStyle = "#FFD700";
             ctx.beginPath();
             ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.fill();
@@ -106,9 +116,11 @@ class Bird {
         ctx.restore();
     }
 
-    update() {
+    update(deltaTime) {
         this.velocity += this.gravity;
         this.y += this.velocity;
+
+        this.updateAnimation(deltaTime);
 
         // Floor collision
         if (this.y + this.radius >= this.game.height) {
@@ -120,6 +132,18 @@ class Bird {
         if (this.y - this.radius <= 0) {
             this.y = this.radius;
             this.velocity = 0;
+        }
+    }
+
+    updateAnimation(deltaTime) {
+        if (!deltaTime) return;
+        this.frameTimer += deltaTime;
+        if (this.frameTimer > this.frameInterval) {
+            this.frameTimer = 0;
+            this.currentSequenceIndex++;
+            if (this.currentSequenceIndex >= this.animationSequence.length) {
+                this.currentSequenceIndex = 0;
+            }
         }
     }
 
@@ -196,7 +220,7 @@ class Game {
 
         // Assets
         this.assets = {
-            birdImage: new Image(),
+            birdImages: [], // changed to array
             audio: {
                 jump: new Audio('assets/jump.mp3'),
                 score: new Audio('assets/score.mp3'),
@@ -204,8 +228,14 @@ class Game {
             }
         };
 
-        // Try to load custom image
-        this.assets.birdImage.src = 'assets/character.jpg';
+        // Load custom images: Central, Up, Down
+        // We'll treat index 0 = Central, 1 = Up, 2 = Down
+        const imageSources = ['assets/CENTRAL.png', 'assets/UPWARD.png', 'assets/DOWNWARD.png'];
+        imageSources.forEach(src => {
+            const img = new Image();
+            img.src = src;
+            this.assets.birdImages.push(img);
+        });
         // Preload audios
         Object.values(this.assets.audio).forEach(audio => {
             audio.load();
@@ -366,7 +396,7 @@ class Game {
     }
 
     update(deltaTime) {
-        this.bird.update();
+        this.bird.update(deltaTime);
 
         // Pipe Management
         this.pipeTimer += deltaTime;
