@@ -244,7 +244,7 @@ class Game {
         this.assets.audio.bgm.volume = 0.3; // Default lower volume for music
 
         this.pipes = [];
-        this.pipeTimer = 0;
+        this.pipeTimer = 1000; // Start at 1000ms so the first pipe appears 1 second sooner
         this.pipeInterval = 2200; // ms
 
         this.bird = new Bird(this);
@@ -367,7 +367,7 @@ class Game {
         this.isGameOver = false;
         this.score = 0;
         this.pipes = [];
-        this.pipeTimer = 0;
+        this.pipeTimer = 1000; // Start at 1000ms so the first pipe appears 1 second sooner
         this.bird = new Bird(this);
         this.lastTime = performance.now();
 
