@@ -220,7 +220,7 @@ class Game {
             birdImages: [], // changed to array
             audio: {
                 gameover: new Audio('assets/ga3.mp3'),
-                bgm: new Audio('assets/bgm.mp3')
+                bgm: new Audio('assets/bgm1.mp3')
             }
         };
 
