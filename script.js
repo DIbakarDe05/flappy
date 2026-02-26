@@ -148,8 +148,6 @@ class Bird {
 
     jump() {
         this.velocity = this.jumpStrength;
-        // Play jump sound
-        this.game.playSound('jump');
     }
 }
 
@@ -221,9 +219,8 @@ class Game {
         this.assets = {
             birdImages: [], // changed to array
             audio: {
-                jump: new Audio('assets/jump.mp3'),
-                score: new Audio('assets/score.mp3'),
-                gameover: new Audio('assets/gameover.mp3')
+                gameover: new Audio('assets/ga3.mp3'),
+                bgm: new Audio('assets/bgm.mp3')
             }
         };
 
@@ -241,6 +238,10 @@ class Game {
             // Reset volume just in case
             audio.volume = 0.5;
         });
+
+        // Background music settings
+        this.assets.audio.bgm.loop = true;
+        this.assets.audio.bgm.volume = 0.3; // Default lower volume for music
 
         this.pipes = [];
         this.pipeTimer = 0;
@@ -306,10 +307,16 @@ class Game {
             document.getElementById('pause-screen').classList.remove('hidden');
             document.getElementById('pause-screen').classList.add('active');
             document.getElementById('pause-btn').classList.add('hidden'); // Optional: hide pause button while paused?
+
+            // Pause background music
+            this.assets.audio.bgm.pause();
         } else {
             document.getElementById('pause-screen').classList.remove('active');
             document.getElementById('pause-screen').classList.add('hidden');
             document.getElementById('pause-btn').classList.remove('hidden');
+
+            // Resume background music
+            this.assets.audio.bgm.play().catch(e => console.log("Audio play blocked", e));
 
             // Resume loop
             this.lastTime = performance.now();
@@ -364,6 +371,10 @@ class Game {
         this.bird = new Bird(this);
         this.lastTime = performance.now();
 
+        // Start playing background music
+        this.assets.audio.bgm.currentTime = 0;
+        this.assets.audio.bgm.play().catch(e => console.log("Audio play blocked", e));
+
         requestAnimationFrame(ts => this.loop(ts));
     }
 
@@ -377,6 +388,10 @@ class Game {
         if (this.isGameOver) return; // Prevent double trigger
         this.isRunning = false;
         this.isGameOver = true;
+
+        // Stop background music
+        this.assets.audio.bgm.pause();
+
         this.playSound('gameover');
 
         document.getElementById('pause-btn').classList.add('hidden');
@@ -427,7 +442,6 @@ class Game {
                 this.score++;
                 pipe.passed = true;
                 document.getElementById('score-display').innerText = this.score;
-                this.playSound('score');
             }
         });
 
